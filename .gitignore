@@ -1,3 +1,5 @@
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -21,6 +23,8 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+output.html
+MANIFEST
 
 # Installer logs
 pip-log.txt
@@ -52,3 +56,4 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+trparse.sublime*
