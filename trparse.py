@@ -9,11 +9,11 @@ Parses the output of a traceroute execution into an AST (Abstract Syntax Tree).
 import re
 import cStringIO
 
-RE_HEADER = re.compile(r'(\S+)\s+\((\d+\.\d+\.\d+\.\d+)\)')
+RE_HEADER = re.compile(r'(\S+)\s+\((\d+\.\d+\.\d+\.\d+)|(([0-9a-fA-F]{1,4})?\:\:?[0-9a-fA-F]{1,4})+\)')
 RE_HOP = re.compile(r'^\s*(\d+)\s+(?:\[AS(\d+)\]\s+){0,1}([\s\S]+?(?=^\s*\d+\s+|^_EOS_))', re.M)
 
-RE_PROBE_NAME = re.compile(r'^([a-zA-Z][a-zA-z0-9\.-]+)$|^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$')
-RE_PROBE_IP = re.compile(r'\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)')
+RE_PROBE_NAME = re.compile(r'^([a-zA-Z][a-zA-z0-9\.-]+)$|^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$|^(([0-9a-fA-F]{1,4})?\:\:?[0-9a-fA-F]{1,4})+$')
+RE_PROBE_IP = re.compile(r'\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|([0-9a-fA-F]{1,4})?\:\:?[0-9a-fA-F]{1,4}\)+')
 RE_PROBE_RTT = re.compile(r'^(\d+(?:\.{0,1}\d+){0,1})$')
 RE_PROBE_ANNOTATION = re.compile(r'^(!\w*)$')
 RE_PROBE_TIMEOUT = re.compile(r'^(\*)$')
@@ -94,13 +94,13 @@ def loads(data):
     match_dest = RE_HEADER.search(data)
     dest_name = match_dest.group(1)
     dest_ip = match_dest.group(2)
-    
+
     # The Traceroute is the root of the tree.
     traceroute = Traceroute(dest_name, dest_ip)
-    
+
     # Get hops
     matches_hop = RE_HOP.findall(data)
-    
+
     for match_hop in matches_hop:
         # Initialize a hop
         idx = int(match_hop[0])
@@ -114,7 +114,7 @@ def loads(data):
         probes_data = match_hop[2].split()
         # Get rid of 'ms': <name> | <(IP)> | <rtt> | '*'
         probes_data = filter(lambda s: s.lower() != 'ms', probes_data)
-        
+
         i = 0
         while i < len(probes_data):
             # For each hop parse probes
