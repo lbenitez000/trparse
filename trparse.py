@@ -12,7 +12,7 @@ import cStringIO
 RE_HEADER = re.compile(r'(\S+)\s+\((\d+\.\d+\.\d+\.\d+)\)')
 RE_HOP = re.compile(r'^\s*(\d+)\s+(?:\[AS(\d+)\]\s+){0,1}([\s\S]+?(?=^\s*\d+\s+|^_EOS_))', re.M)
 
-RE_PROBE_NAME = re.compile(r'^([a-zA-Z][a-zA-z0-9\.-]+)$|^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$')
+RE_PROBE_NAME = re.compile(r'^([a-zA-Z0-9][a-zA-z0-9\.-]+)$|^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$')
 RE_PROBE_IP = re.compile(r'\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\)')
 RE_PROBE_RTT = re.compile(r'^(\d+(?:\.{0,1}\d+){0,1})$')
 RE_PROBE_ANNOTATION = re.compile(r'^(!\w*)$')
@@ -123,16 +123,16 @@ def loads(data):
             rtt = None
             anno = ''
 
-            if RE_PROBE_NAME.match(probes_data[i]):
+            if RE_PROBE_RTT.match(probes_data[i]):
+                # Matched rtt, so name and IP have been parsed before
+                rtt = float(probes_data[i])
+                i += 1
+            elif RE_PROBE_NAME.match(probes_data[i]):
                 # Matched a name, so next elems are IP and rtt
                 name = probes_data[i]
                 ip = probes_data[i+1].strip('()')
                 rtt = float(probes_data[i+2])
                 i += 3
-            elif RE_PROBE_RTT.match(probes_data[i]):
-                # Matched rtt, so name and IP have been parsed before
-                rtt = float(probes_data[i])
-                i += 1
             elif RE_PROBE_TIMEOUT.match(probes_data[i]):
                 # Its a timeout, so maybe name and IP have been parsed before
                 # or maybe not. But it's Hop job to deal with it
