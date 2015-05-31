@@ -122,16 +122,18 @@ def loads(data):
             rtt = None
             anno = ''
 
-            if RE_PROBE_NAME.match(probes_data[i]):
-                # Matched a name, so next elems are IP and rtt
+            # RTT check comes first because RE_PROBE_NAME can confuse rtt with an IP as name
+            # The regex RE_PROBE_NAME can be improved
+            if RE_PROBE_RTT.match(probes_data[i]):
+                # Matched rtt, so name and IP have been parsed before
+                rtt = float(probes_data[i])
+                i += 1
+            elif RE_PROBE_NAME.match(probes_data[i]):
+                # Matched a name, so next elements are IP and rtt
                 name = probes_data[i]
                 ip = probes_data[i+1].strip('()')
                 rtt = float(probes_data[i+2])
                 i += 3
-            elif RE_PROBE_RTT.match(probes_data[i]):
-                # Matched rtt, so name and IP have been parsed before
-                rtt = float(probes_data[i])
-                i += 1
             elif RE_PROBE_TIMEOUT.match(probes_data[i]):
                 # Its a timeout, so maybe name and IP have been parsed before
                 # or maybe not. But it's Hop job to deal with it
