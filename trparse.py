@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
 
 """
-Copyright (C) 2014 Luis Benitez
+Copyright (C) 2015 Luis Benitez
 
 Parses the output of a traceroute execution into an AST (Abstract Syntax Tree).
 """
 
 import re
-import cStringIO
 
-RE_HEADER = re.compile(r'(\S+)\s+\((\d+\.\d+\.\d+\.\d+)|(([0-9a-fA-F]{1,4})?\:\:?[0-9a-fA-F]{1,4})+\)')
-RE_HOP = re.compile(r'^\s*(\d+)\s+(?:\[AS(\d+)\]\s+){0,1}([\s\S]+?(?=^\s*\d+\s+|^_EOS_))', re.M)
+RE_HEADER = re.compile(r'(\S+)\s+\((?:(\d+\.\d+\.\d+\.\d+)|([0-9a-fA-F:]+))\)')
+RE_HOP = re.compile(r'^\s*(\d+)\s+(?:\[AS(\d+)\]\s+)?([\s\S]+?(?=^\s*\d+\s+|^_EOS_))', re.M)
 
-RE_PROBE_NAME = re.compile(r'^([a-zA-Z][a-zA-z0-9\.-]+)$|^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$|^(([0-9a-fA-F]{1,4})?\:\:?[0-9a-fA-F]{1,4})+$')
-RE_PROBE_IP = re.compile(r'\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|([0-9a-fA-F]{1,4})?\:\:?[0-9a-fA-F]{1,4}\)+')
-RE_PROBE_RTT = re.compile(r'^(\d+(?:\.{0,1}\d+){0,1})$')
+RE_PROBE_NAME = re.compile(r'^([a-zA-z0-9\.-]+)$|^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$|^([0-9a-fA-F:]+)$')
+RE_PROBE_IP = re.compile(r'\((?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|([0-9a-fA-F:]+))\)+')
+RE_PROBE_RTT = re.compile(r'^(\d+(?:\.?\d+)?)$')
 RE_PROBE_ANNOTATION = re.compile(r'^(!\w*)$')
 RE_PROBE_TIMEOUT = re.compile(r'^(\*)$')
+
 
 class Traceroute(object):
     """
@@ -89,7 +89,6 @@ def loads(data):
     """Parser entry point. Parses the output of a traceroute execution"""
     data += "\n_EOS_" # Append EOS token. Helps to match last RE_HOP
 
-
     # Get headers
     match_dest = RE_HEADER.search(data)
     dest_name = match_dest.group(1)
@@ -139,8 +138,8 @@ def loads(data):
                 rtt = None
                 i += 1
             else:
-                print "i: %d\nprobes_data: %s\nname: %s\nip: %s\nrtt: %s\nanno: %s" % (i, probes_data, name, ip, rtt, anno)
-                raise Exception("This souldn't have happened")
+                ext = "i: %d\nprobes_data: %s\nname: %s\nip: %s\nrtt: %s\nanno: %s" % (i, probes_data, name, ip, rtt, anno)
+                raise ParseError("Parse error \n%s" % ext)
             # Check for annotation
             try:
                 if RE_PROBE_ANNOTATION.match(probes_data[i]):
@@ -155,3 +154,9 @@ def loads(data):
         traceroute.add_hop(hop)
 
     return traceroute
+
+def load(data):
+    return loads(data.read())
+
+class ParseError(Exception):
+    pass
