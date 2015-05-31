@@ -11,7 +11,7 @@ try:
    import pypandoc
    long_description = pypandoc.convert('README.md', 'rst')
 except (IOError, ImportError):
-   long_description = ''
+   long_description = 'Parses the output of a traceroute or traceroute6 execution into an AST (Abstract Syntax Tree)'
 
 classifiers = [
     "Intended Audience :: Developers",
