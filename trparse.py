@@ -112,7 +112,7 @@ def loads(data):
         # Parse probes data: <name> | <(IP)> | <rtt> | 'ms' | '*'
         probes_data = match_hop[2].split()
         # Get rid of 'ms': <name> | <(IP)> | <rtt> | '*'
-        probes_data = filter(lambda s: s.lower() != 'ms', probes_data)
+        probes_data = list(filter(lambda s: s.lower() != 'ms', probes_data))
 
         i = 0
         while i < len(probes_data):
