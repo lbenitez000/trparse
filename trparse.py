@@ -32,7 +32,7 @@ class Traceroute(object):
         self.hops.append(hop)
 
     def __str__(self):
-        text = "Traceroute for %s (%s)\n\n" % (self.dest_name, self.dest_ip)
+        text = "Traceroute for {:s} ({:s})\n\n".format(self.dest_name, self.dest_ip)
         for hop in self.hops:
             text += str(hop)
         return text
@@ -109,8 +109,8 @@ def loads(data):
         dest_name = match_dest.group(1)
         dest_ip = match_dest.group(2)
     else:
-        ext = "header_line: %s" % header_line
-        raise ParseError("Parse error \n%s" % ext)
+        ext = "header_line: {:s}".format(header_line)
+        raise ParseError("Parse error \n{:s}".format(ext))
 
     # The Traceroute is the root of the tree.
     traceroute = Traceroute(dest_name, dest_ip)
@@ -170,8 +170,9 @@ def loads(data):
                     # or maybe not. But it's Hop job to deal with it.
                     i += 1
                 else:
-                    ext = "i: %d\nprobes_data: %s\nasn: %s\nname: %s\nip: %s\nrtt: %s\nanno: %s" % (i, probes_data, asn, name, ip, rtt, anno)
-                    raise ParseError("Parse error \n%s" % ext)
+                    ext = "i: {:d}\nprobes_data: {:s}\nasn: {:s}\nname: {:s}\nip: {:s}\nrtt: {:s}\nanno: {:s}".format(
+                            i, probes_data, asn, name, ip, rtt, anno)
+                    raise ParseError("Parse error \n{:s}".format(ext))
                 # Check for annotation
                 try:
                     if RE_PROBE_ANNOTATION.match(probes_data[i]):
