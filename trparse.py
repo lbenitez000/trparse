@@ -13,6 +13,7 @@ RE_HOP = re.compile(r'^\s*(\d+)\s+([\s\S]+?(?=^\s*\d+\s+|^_EOS_))', re.M)
 
 RE_PROBE_ASN = re.compile(r'^\[AS(\d+)\]$')
 RE_PROBE_NAME = re.compile(r'^([a-zA-z0-9\.-]+)$|^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$|^([0-9a-fA-F:]+)$')
+RE_PROBE_IP = re.compile(r'^\((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|[0-9a-fA-F:]+)\)$')
 RE_PROBE_RTT = re.compile(r'^(\d+(?:\.?\d+)?)$')
 RE_PROBE_ANNOTATION = re.compile(r'^(!\w*)$')
 RE_PROBE_TIMEOUT = re.compile(r'^(\*)$')
@@ -117,69 +118,65 @@ def loads(data):
         idx = int(match_hop[0])
         hop = Hop(idx)
 
-        # Parse probes data: [<asn>] | <name> | <(IP)> | <rtt> | 'ms' | '*'
-        probes_data = match_hop[1].split()
-        # Get rid of 'ms': [<asn>] | <name> | <(IP)> | <rtt> | '*'
-        probes_data = filter(lambda s: s.lower() != 'ms', probes_data)
-
-        i = 0
-        while i < len(probes_data):
-            # For each hop parse probes
+        # For each hop parse probes
+        # For this, iterate over all probe lines. Each line represents probes of the same
+        # host (asn/name/ip).
+        for probes_line in match_hop[1].splitlines():
             asn = None
             name = None
             ip = None
-            rtt = None
-            anno = ''
 
-            # RTT check comes first because RE_PROBE_NAME can confuse rtt with an IP as name
-            # The regex RE_PROBE_NAME can be improved
-            if RE_PROBE_RTT.match(probes_data[i]):
-                # Matched rtt, so asn, name and IP have been parsed before
-                rtt = float(probes_data[i])
-                i += 1
-            elif RE_PROBE_ASN.match(probes_data[i]):
-                # Matched a ASN, so next elements are name, IP and rtt
-                asn = int(RE_PROBE_ASN.match(probes_data[i]).group(1))
-                name = probes_data[i+1]
-                if probes_data[i+2].startswith('('):
-                    ip = probes_data[i+2].strip('()')
-                    rtt = float(probes_data[i+3])
-                    i += 4
-                else:
-                    ip = name
-                    name = None
-                    rtt = float(probes_data[i+2])
-                    i += 3
-            elif RE_PROBE_NAME.match(probes_data[i]):
-                # Matched a name, so next elements are IP and rtt
-                name = probes_data[i]
-                if probes_data[i+1].startswith('('):
-                    ip = probes_data[i+1].strip('()')
-                    rtt = float(probes_data[i+2])
-                    i += 3
-                else:
-                    ip = name
-                    name = None
-                    rtt = float(probes_data[i+1])
-                    i += 2
-            elif RE_PROBE_TIMEOUT.match(probes_data[i]):
-                # Its a timeout, so maybe asn, name and IP have been parsed before
-                # or maybe not. But it's Hop job to deal with it.
+            # Parse probes data: [<asn>] | <name> | <(IP)> | <rtt> | 'ms' | '*'
+            probes_data = probes_line.split()
+            # Get rid of 'ms': [<asn>] | <name> | <(IP)> | <rtt> | '*'
+            probes_data = filter(lambda s: s.lower() != 'ms', probes_data)
+
+            i = 0
+            while i < len(probes_data):
                 rtt = None
-                i += 1
-            else:
-                ext = "i: %d\nprobes_data: %s\nname: %s\nip: %s\nrtt: %s\nanno: %s" % (i, probes_data, name, ip, rtt, anno)
-                raise ParseError("Parse error \n%s" % ext)
-            # Check for annotation
-            try:
-                if RE_PROBE_ANNOTATION.match(probes_data[i]):
-                    anno = probes_data[i]
-                    i += 1
-            except IndexError:
-                pass
+                anno = ''
 
-            probe = Probe(asn, name, ip, rtt, anno)
-            hop.add_probe(probe)
+                # RTT check comes first because RE_PROBE_NAME can confuse rtt with an IP as name
+                # The regex RE_PROBE_NAME can be improved
+                if RE_PROBE_RTT.match(probes_data[i]):
+                    # Matched rtt, so asn, name and IP have been parsed before
+                    rtt = float(probes_data[i])
+                    i += 1
+                elif RE_PROBE_ASN.match(probes_data[i]):
+                    # Matched a ASN, so next elements is name
+                    asn = int(RE_PROBE_ASN.match(probes_data[i]).group(1))
+                    print(asn)
+                    i += 1
+                    continue
+                elif RE_PROBE_NAME.match(probes_data[i]):
+                    # Matched a name, so next elements is expected to be an IP
+                    name = probes_data[i]
+                    i += 1
+                    if RE_PROBE_IP.match(probes_data[i]):
+                        ip = RE_PROBE_IP.match(probes_data[i]).group(1)
+                        i += 1
+                    else:
+                        # Next element is not an IP. So 'name' actually is the IP.
+                        ip = name
+                        name = None
+                    continue
+                elif RE_PROBE_TIMEOUT.match(probes_data[i]):
+                    # Its a timeout, so maybe asn, name and IP have been parsed before
+                    # or maybe not. But it's Hop job to deal with it.
+                    i += 1
+                else:
+                    ext = "i: %d\nprobes_data: %s\nasn: %s\nname: %s\nip: %s\nrtt: %s\nanno: %s" % (i, probes_data, asn, name, ip, rtt, anno)
+                    raise ParseError("Parse error \n%s" % ext)
+                # Check for annotation
+                try:
+                    if RE_PROBE_ANNOTATION.match(probes_data[i]):
+                        anno = probes_data[i]
+                        i += 1
+                except IndexError:
+                    pass
+
+                probe = Probe(asn, name, ip, rtt, anno)
+                hop.add_probe(probe)
 
         traceroute.add_hop(hop)
 
