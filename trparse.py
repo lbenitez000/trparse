@@ -49,7 +49,7 @@ class Hop(object):
         """Adds a Probe instance to this hop's results."""
         if self.probes:
             probe_last = self.probes[-1]
-            if not probe.ip and probe.rtt:
+            if not probe.ip and probe.rtt != None:
                 probe.asn = probe_last.asn
                 probe.ip = probe_last.ip
                 probe.name = probe_last.name
@@ -80,7 +80,7 @@ class Probe(object):
         self.anno = anno # Annotation, such as !H, !N, !X, etc
 
     def __str__(self):
-        if self.rtt:
+        if self.rtt != None:
             text = ""
             if self.asn != None:
                 text += "[AS{:d}] ".format(self.asn)
@@ -134,7 +134,7 @@ def loads(data):
             # RTT check comes first because RE_PROBE_NAME can confuse rtt with an IP as name
             # The regex RE_PROBE_NAME can be improved
             if RE_PROBE_RTT.match(probes_data[i]):
-                # Matched rtt, so name and IP have been parsed before
+                # Matched rtt, so asn, name and IP have been parsed before
                 rtt = float(probes_data[i])
                 i += 1
             elif RE_PROBE_ASN.match(probes_data[i]):
@@ -164,7 +164,7 @@ def loads(data):
                     i += 2
             elif RE_PROBE_TIMEOUT.match(probes_data[i]):
                 # Its a timeout, so maybe asn, name and IP have been parsed before
-                # or maybe not. But it's Hop job to deal with it
+                # or maybe not. But it's Hop job to deal with it.
                 rtt = None
                 i += 1
             else:
