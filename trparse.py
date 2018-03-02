@@ -84,7 +84,14 @@ class Probe(object):
             text = ""
             if self.asn != None:
                 text += "[AS{:d}] ".format(self.asn)
-            text += "{:s} ({:s}) {:1.3f} ms {:s}\n".format(self.name, self.ip, self.rtt, self.anno)
+            if self.name:
+                text += "{:s} ({:s}) ".format(self.name, self.ip)
+            else:
+                text += "{:s} ".format(self.ip)
+            text += "{:1.3f} ms".format(self.rtt)
+            if self.anno:
+                text += " {:s}".format(self.anno)
+            text += "\n"
         else:
             text = "*\n"
         return text
@@ -134,15 +141,27 @@ def loads(data):
                 # Matched a ASN, so next elements are name, IP and rtt
                 asn = int(RE_PROBE_ASN.match(probes_data[i]).group(1))
                 name = probes_data[i+1]
-                ip = probes_data[i+2].strip('()')
-                rtt = float(probes_data[i+3])
-                i += 4
+                if probes_data[i+2].startswith('('):
+                    ip = probes_data[i+2].strip('()')
+                    rtt = float(probes_data[i+3])
+                    i += 4
+                else:
+                    ip = name
+                    name = None
+                    rtt = float(probes_data[i+2])
+                    i += 3
             elif RE_PROBE_NAME.match(probes_data[i]):
                 # Matched a name, so next elements are IP and rtt
                 name = probes_data[i]
-                ip = probes_data[i+1].strip('()')
-                rtt = float(probes_data[i+2])
-                i += 3
+                if probes_data[i+1].startswith('('):
+                    ip = probes_data[i+1].strip('()')
+                    rtt = float(probes_data[i+2])
+                    i += 3
+                else:
+                    ip = name
+                    name = None
+                    rtt = float(probes_data[i+1])
+                    i += 2
             elif RE_PROBE_TIMEOUT.match(probes_data[i]):
                 # Its a timeout, so maybe asn, name and IP have been parsed before
                 # or maybe not. But it's Hop job to deal with it
