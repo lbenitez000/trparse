@@ -8,7 +8,7 @@ Parses the output of a traceroute execution into an AST (Abstract Syntax Tree).
 
 import re
 
-RE_HEADER = re.compile(r'(\S+)\s+\((?:(\d+\.\d+\.\d+\.\d+)|([0-9a-fA-F:]+))\)')
+RE_HEADER = re.compile(r'^traceroute to (\S+)\s+\((?:(\d+\.\d+\.\d+\.\d+)|([0-9a-fA-F:]+))\)')
 RE_HOP = re.compile(r'^\s*(\d+)\s+(?:\[AS(\d+)\]\s+)?([\s\S]+?(?=^\s*\d+\s+|^_EOS_))', re.M)
 
 RE_PROBE_NAME = re.compile(r'^([a-zA-z0-9\.-]+)$|^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$|^([0-9a-fA-F:]+)$')
