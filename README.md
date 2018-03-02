@@ -17,18 +17,20 @@ Supports the following info. Parsed info in bold:
 
 - Hop
 	- **Hop counter**
-	- **[AS\#]**
 	- Probe
+	    - **[AS\#]**
 		- **Hostname**
 		- **(IP address)**
 		- **RTT**
 		- **!Annotation**
 
+The `-a` and `-n` traceroute flags are supported.
+
 # Usage
 
-```
+```python
 import trparse
-s = <some_output_from_traceroute> 
+s = "<some_output_from_traceroute>"
 # Parse the traceroute output
 traceroute = trparse.loads(s)
 # You can print the result
@@ -51,10 +53,10 @@ print probe.ip
 
 - Hop
 	- idx :: \<int\>
-	- asn :: \<int\>
 	- probes :: \<list\<Probe\>\>
 
 - Probe
+	- asn :: \<int\>
 	- name :: \<str\>
 	- ip :: \<str\>
 	- rtt :: \<float\>
@@ -76,10 +78,13 @@ some tokens it expects to find in a specific format. For example:
 	in a line, it has to be the first token in that line. (can be
 	preceded by space characters).
 -   **[AS\#]** must be surrounded by square brackets `[]` and start with
-	`AS`.
--   **Hostname** Can be a hostname or its IP address without parenthesis
+	`AS` (AS numbers are output in `traceroute -a` commands).
+-   **Hostname** can be a hostname or its IP address without parenthesis.
 -   **(IP address)** either IPv4 or IPv6 must surrounded by parenthesis
 	`()`.
+    -    Hostname can be ommited (this happens in `traceroute -n`
+         commands). In this case, IP address must NOT be surrounded by
+         parenthesis.
 -   **RTT** must be in integer (without commas or dots) or float format
 	(with one (and only one) dot) separated from the `ms` literal by a
 	least one space character.
