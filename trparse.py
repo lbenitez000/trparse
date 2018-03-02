@@ -102,10 +102,15 @@ def loads(data):
     """Parser entry point. Parses the output of a traceroute execution"""
     data += "\n_EOS_" # Append EOS token. Helps to match last RE_HOP
 
-    # Get headers
-    match_dest = RE_HEADER.search(data)
-    dest_name = match_dest.group(1)
-    dest_ip = match_dest.group(2)
+    # Get header
+    header_line = data.splitlines()[0]
+    match_dest = RE_HEADER.match(header_line)
+    if match_dest:
+        dest_name = match_dest.group(1)
+        dest_ip = match_dest.group(2)
+    else:
+        ext = "header_line: %s" % header_line
+        raise ParseError("Parse error \n%s" % ext)
 
     # The Traceroute is the root of the tree.
     traceroute = Traceroute(dest_name, dest_ip)
