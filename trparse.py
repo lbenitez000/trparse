@@ -49,7 +49,7 @@ class Hop(object):
         """Adds a Probe instance to this hop's results."""
         if self.probes:
             probe_last = self.probes[-1]
-            if not probe.ip:
+            if not probe.ip and probe.rtt:
                 probe.asn = probe_last.asn
                 probe.ip = probe_last.ip
                 probe.name = probe_last.name
