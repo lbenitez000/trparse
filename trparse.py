@@ -43,7 +43,7 @@ class Hop(object):
     Abstraction of a hop in a traceroute.
     """
     def __init__(self, idx):
-        self.idx = idx # Hop count, starting at 1
+        self.idx = idx # Hop count, starting at 1 most of the times
         self.probes = [] # Series of Probe instances
 
     def add_probe(self, probe):
