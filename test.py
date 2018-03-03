@@ -19,7 +19,7 @@ def main():
         for filename in filenames:
             with open(filename, 'r') as f:
                 
-                print("Loading {}".format(filename))
+                print("Loading {0}".format(filename))
                 tr = trparse.load(f)
 
                 print("Dumping")
