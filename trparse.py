@@ -55,9 +55,9 @@ class Hop(object):
         self.probes.append(probe)
 
     def __str__(self):
-        text = "{:>3d} ".format(self.idx)
+        text = "{0:>3d} ".format(self.idx)
         if self.asn:
-            text += "[AS{:>5d}] ".format(self.asn)
+            text += "[AS{0:>5d}] ".format(self.asn)
         text_len = len(text)
         for n, probe in enumerate(self.probes):
             text_probe = str(probe)
@@ -80,7 +80,7 @@ class Probe(object):
 
     def __str__(self):
         if self.rtt:
-            text = "{:s} ({:s}) {:1.3f} ms {:s}\n".format(self.name, self.ip, self.rtt, self.anno)
+            text = "{0:s} ({1:s}) {2:1.3f} ms {3:s}\n".format(self.name, self.ip, self.rtt, self.anno)
         else:
             text = "*\n"
         return text
