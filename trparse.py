@@ -86,7 +86,7 @@ class Probe(object):
     def __str__(self):
         text = ""
         if self.asn is not None:
-            text += "[AS{:>5d}] ".format(self.asn)
+            text += "[AS{:d}] ".format(self.asn)
         if self.rtt:
             text += "{:s} ({:s}) {:1.3f} ms".format(self.name, self.ip, self.rtt)
         else:
