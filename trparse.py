@@ -112,6 +112,10 @@ def loads(data):
 
     # Parse the remaining lines, they should be only hops/probes
     for line in lines[1:]:
+        # Skip empty lines
+        if not line:
+            continue
+
         hop_match = RE_HOP.match(line)
 
         if hop_match.group(1):
