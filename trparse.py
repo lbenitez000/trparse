@@ -8,14 +8,19 @@ Parses the output of a traceroute execution into an AST (Abstract Syntax Tree).
 
 import re
 
-RE_HEADER = re.compile(r'(\S+)\s+\((?:(\d+\.\d+\.\d+\.\d+)|([0-9a-fA-F:]+))\)')
-RE_HOP = re.compile(r'^\s*(\d+)\s+(?:\[AS(\d+)\]\s+)?([\s\S]+?(?=^\s*\d+\s+|^_EOS_))', re.M)
+from decimal import Decimal
 
-RE_PROBE_NAME = re.compile(r'^([a-zA-z0-9\.-]+)$|^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$|^([0-9a-fA-F:]+)$')
-RE_PROBE_IP = re.compile(r'\((?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|([0-9a-fA-F:]+))\)+')
-RE_PROBE_RTT = re.compile(r'^(\d+(?:\.?\d+)?)$')
+RE_HEADER = re.compile(r'(\S+)\s+\((?:(\d+\.\d+\.\d+\.\d+)|([0-9a-fA-F:]+))\)')
+
+RE_PROBE_NAME_IP = re.compile(r'(\S+)\s+\((?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|([0-9a-fA-F:]+))\)+')
 RE_PROBE_ANNOTATION = re.compile(r'^(!\w*)$')
 RE_PROBE_TIMEOUT = re.compile(r'^(\*)$')
+
+RE_HOP_INDEX = re.compile(r'^\s*(\d+)\s+')
+RE_FIRST_HOP = re.compile(r'^\s*(\d+)\s+(.+)')
+RE_HOP = re.compile(r'^\s*(\d+)?\s+(.+)$')
+RE_PROBE_ASN = re.compile(r'\[AS(\d+)\]')
+RE_PROBE_RTT_ANNOTATION = re.compile(r'(?:(\d+(?:\.?\d+)?)\s+ms|(\*))\s*(!\S*)?')
 
 
 class Traceroute(object):
@@ -36,14 +41,14 @@ class Traceroute(object):
             text += str(hop)
         return text
 
+
 class Hop(object):
     """
     Abstraction of a hop in a traceroute.
     """
-    def __init__(self, idx, asn=None):
-        self.idx = idx # Hop count, starting at 1
-        self.asn = asn # Autonomous System number
-        self.probes = [] # Series of Probe instances
+    def __init__(self, idx):
+        self.idx = idx  # Hop count, starting at 1
+        self.probes = []  # Series of Probe instances
 
     def add_probe(self, probe):
         """Adds a Probe instance to this hop's results."""
@@ -56,8 +61,6 @@ class Hop(object):
 
     def __str__(self):
         text = "{:>3d} ".format(self.idx)
-        if self.asn:
-            text += "[AS{:>5d}] ".format(self.asn)
         text_len = len(text)
         for n, probe in enumerate(self.probes):
             text_probe = str(probe)
@@ -68,97 +71,102 @@ class Hop(object):
         text += "\n"
         return text
 
+
 class Probe(object):
     """
     Abstraction of a probe in a traceroute.
     """
-    def __init__(self, name=None, ip=None, rtt=None, anno=''):
+    def __init__(self, name=None, ip=None, asn=None, rtt=None, annotation=None):
         self.name = name
         self.ip = ip
-        self.rtt = rtt # RTT in ms
-        self.anno = anno # Annotation, such as !H, !N, !X, etc
+        self.asn = asn  # Autonomous System number
+        self.rtt = rtt  # RTT in ms
+        self.annotation = annotation  # Annotation, such as !H, !N, !X, etc
 
     def __str__(self):
+        text = ""
+        if self.asn is not None:
+            text += "[AS{:>5d}] ".format(self.asn)
         if self.rtt:
-            text = "{:s} ({:s}) {:1.3f} ms {:s}\n".format(self.name, self.ip, self.rtt, self.anno)
+            text += "{:s} ({:s}) {:1.3f} ms".format(self.name, self.ip, self.rtt)
         else:
-            text = "*\n"
+            text = "*"
+        if self.annotation:
+            text += " {:s}".format(self.annotation)
+        text += "\n"
         return text
+
 
 def loads(data):
     """Parser entry point. Parses the output of a traceroute execution"""
-    data += "\n_EOS_" # Append EOS token. Helps to match last RE_HOP
+
+    lines = data.splitlines()
 
     # Get headers
-    match_dest = RE_HEADER.search(data)
+    match_dest = RE_HEADER.search(lines[0])
     dest_name = match_dest.group(1)
     dest_ip = match_dest.group(2)
 
-    # The Traceroute is the root of the tree.
+    # The Traceroute node is the root of the tree
     traceroute = Traceroute(dest_name, dest_ip)
 
-    # Get hops
-    matches_hop = RE_HOP.findall(data)
+    # Parse the remaining lines, they should be only hops/probes
+    for line in lines[1:]:
+        hop_match = RE_HOP.match(line)
 
-    for match_hop in matches_hop:
-        # Initialize a hop
-        idx = int(match_hop[0])
-        if match_hop[1]:
-            asn = int(match_hop[1])
+        if hop_match.group(1):
+            hop_index = int(hop_match.group(1))
         else:
-            asn = None
-        hop = Hop(idx, asn)
+            hop_index = None
 
-        # Parse probes data: <name> | <(IP)> | <rtt> | 'ms' | '*'
-        probes_data = match_hop[2].split()
-        # Get rid of 'ms': <name> | <(IP)> | <rtt> | '*'
-        probes_data = filter(lambda s: s.lower() != 'ms', probes_data)
+        if hop_index is not None:
+            hop = Hop(hop_index)
+            traceroute.add_hop(hop)
 
-        i = 0
-        while i < len(probes_data):
-            # For each hop parse probes
-            name = None
-            ip = None
-            rtt = None
-            anno = ''
+        hop_string = hop_match.group(2)
 
-            # RTT check comes first because RE_PROBE_NAME can confuse rtt with an IP as name
-            # The regex RE_PROBE_NAME can be improved
-            if RE_PROBE_RTT.match(probes_data[i]):
-                # Matched rtt, so name and IP have been parsed before
-                rtt = float(probes_data[i])
-                i += 1
-            elif RE_PROBE_NAME.match(probes_data[i]):
-                # Matched a name, so next elements are IP and rtt
-                name = probes_data[i]
-                ip = probes_data[i+1].strip('()')
-                rtt = float(probes_data[i+2])
-                i += 3
-            elif RE_PROBE_TIMEOUT.match(probes_data[i]):
-                # Its a timeout, so maybe name and IP have been parsed before
-                # or maybe not. But it's Hop job to deal with it
-                rtt = None
-                i += 1
+        probe_asn_match = RE_PROBE_ASN.search(hop_string)
+        if probe_asn_match:
+            probe_asn = int(probe_asn_match.group(1))
+        else:
+            probe_asn = None
+
+        probe_name_ip_match = RE_PROBE_NAME_IP.search(hop_string)
+        if probe_name_ip_match:
+            probe_name = probe_name_ip_match.group(1)
+            probe_ip = probe_name_ip_match.group(2) or probe_name_ip_match.group(3)
+        else:
+            probe_name = None
+            probe_ip = None
+
+        probe_rtt_annotations = RE_PROBE_RTT_ANNOTATION.findall(hop_string)
+
+        for probe_rtt_annotation in probe_rtt_annotations:
+            if probe_rtt_annotation[0]:
+                probe_rtt = Decimal(probe_rtt_annotation[0])
+            elif probe_rtt_annotation[1]:
+                probe_rtt = None
             else:
-                ext = "i: %d\nprobes_data: %s\nname: %s\nip: %s\nrtt: %s\nanno: %s" % (i, probes_data, name, ip, rtt, anno)
-                raise ParseError("Parse error \n%s" % ext)
-            # Check for annotation
-            try:
-                if RE_PROBE_ANNOTATION.match(probes_data[i]):
-                    anno = probes_data[i]
-                    i += 1
-            except IndexError:
-                pass
+                message = "Expected probe RTT or *. Got: '{}'".format(probe_rtt_annotation[0])
+                raise Exception(message)
 
-            probe = Probe(name, ip, rtt, anno)
+            probe_annotation = probe_rtt_annotation[2] or None
+
+            probe = Probe(
+                name=probe_name,
+                ip=probe_ip,
+                asn=probe_asn,
+                rtt=probe_rtt,
+                annotation=probe_annotation
+            )
             hop.add_probe(probe)
-
-        traceroute.add_hop(hop)
 
     return traceroute
 
+
 def load(data):
     return loads(data.read())
+
 
 class ParseError(Exception):
     pass
