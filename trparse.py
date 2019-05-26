@@ -20,7 +20,7 @@ RE_HOP_INDEX = re.compile(r'^\s*(\d+)\s+')
 RE_FIRST_HOP = re.compile(r'^\s*(\d+)\s+(.+)')
 RE_HOP = re.compile(r'^\s*(\d+)?\s+(.+)$')
 RE_PROBE_ASN = re.compile(r'\[AS(\d+)\]')
-RE_PROBE_RTT_ANNOTATION = re.compile(r'(?:(\d+(?:\.?\d+)?)\s+ms|(\*))\s*(!\S*)?')
+RE_PROBE_RTT_ANNOTATION = re.compile(r'(?:(\d+(?:\.?\d+)?)\s+ms|(\s+\*\s+))\s*(!\S*)?')
 
 
 class Traceroute(object):
