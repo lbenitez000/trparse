@@ -77,7 +77,7 @@ some tokens it expects to find in a specific format. For example:
     preceded by space characters).
 -   **[AS\#]** must be surrounded by square brackets `[]` and start with
     `AS`.
--   **Hostname** Can be a hostname or its IP address without parenthesis
+-   **Hostname** can be a hostname or its IP address without parenthesis.
 -   **(IP address)** either IPv4 or IPv6 must surrounded by parenthesis
     `()`.
 -   **RTT** must be in integer (without commas or dots) or float format
