@@ -26,9 +26,9 @@ Supports the following info. Parsed info in bold:
 
 # Usage
 
-```
+```python
 import trparse
-s = <some_output_from_traceroute> 
+s = "<some_output_from_traceroute>"
 # Parse the traceroute output
 traceroute = trparse.loads(s)
 # You can print the result
