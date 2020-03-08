@@ -17,8 +17,8 @@ Supports the following info. Parsed info in bold:
 
 - Hop
     - **Hop counter**
-    - **[AS\#]**
     - Probe
+        - **[AS\#]**
         - **Hostname**
         - **(IP address)**
         - **RTT**
