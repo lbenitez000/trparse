@@ -36,7 +36,7 @@ class Traceroute(object):
         self.hops.append(hop)
 
     def __str__(self):
-        text = "Traceroute for %s (%s)\n\n" % (self.dest_name, self.dest_ip)
+        text = "Traceroute for {} ({})\n\n".format(self.dest_name, self.dest_ip)
         for hop in self.hops:
             text += str(hop)
         return text
@@ -47,7 +47,7 @@ class Hop(object):
     Abstraction of a hop in a traceroute.
     """
     def __init__(self, idx):
-        self.idx = idx  # Hop count, starting at 1
+        self.idx = idx  # Hop count, starting at 1 (usually)
         self.probes = []  # Series of Probe instances
 
     def add_probe(self, probe):
