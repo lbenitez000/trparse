@@ -32,14 +32,14 @@ s = <some_output_from_traceroute>
 # Parse the traceroute output
 traceroute = trparse.loads(s)
 # You can print the result
-print traceroute
+print(traceroute)
 # Save it as string
 tr_str = str(traceroute) 
 # Or travel the tree
 hop = traceroute.hops[0]
 probe = hop.probes[0]
 # And print the IP address
-print probe.ip
+print(probe.ip)
 ```
 
 # Data structures
