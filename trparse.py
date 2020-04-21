@@ -104,6 +104,8 @@ def loads(data):
 
     # Get headers
     match_dest = RE_HEADER.search(lines[0])
+    if not match_dest:
+        raise InvalidHeader
     dest_name = match_dest.group(1)
     dest_ip = match_dest.group(2)
 
@@ -173,4 +175,7 @@ def load(data):
 
 
 class ParseError(Exception):
+    pass
+
+class InvalidHeader(ParseError):
     pass
