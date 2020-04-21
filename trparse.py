@@ -93,7 +93,7 @@ class Probe(object):
         if self.asn is not None:
             text += "[AS{:d}] ".format(self.asn)
         if self.rtt:
-            text += "{:s} ({:s}) {:1.3f} ms".format(self.name, self.ip, self.rtt)
+            text += "{} ({}) {:1.3f} ms".format(self.name, self.ip, self.rtt)
         else:
             text = "*"
         if self.annotation:
