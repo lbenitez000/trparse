@@ -10,9 +10,14 @@ import re
 
 from decimal import Decimal
 
-RE_HEADER = re.compile(r'(\S+)\s+\((?:(\d+\.\d+\.\d+\.\d+)|([0-9a-fA-F:]+))\)')
+# Unix uses () for IPs whereas Windows uses []
+RE_HEADER = re.compile(r'(\S+)\s+(?:\(|\[)(?:(\d+\.\d+\.\d+\.\d+)|([0-9a-fA-F:]+))(?:\)|\])')
 
-RE_PROBE_NAME_IP = re.compile(r'(\S+)\s+\((?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|([0-9a-fA-F:]+))\)+')
+# Again, we must search for () or [] here
+RE_PROBE_NAME_IP = re.compile(r'(\S+)\s+(?:\(|\[)(?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|([0-9a-fA-F:]+))(?:\)|\])+')
+# Fallback when no hostname present (also happens on windows)
+RE_PROBE_IP_ONLY = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})+')
+
 RE_PROBE_ANNOTATION = re.compile(r'^(!\w*)$')
 RE_PROBE_TIMEOUT = re.compile(r'^(\*)$')
 
@@ -142,8 +147,14 @@ def loads(data):
             probe_name = probe_name_ip_match.group(1)
             probe_ip = probe_name_ip_match.group(2) or probe_name_ip_match.group(3)
         else:
-            probe_name = None
-            probe_ip = None
+            # Let's try to only get IP (happens on windows)
+            probe_ip_match = RE_PROBE_IP_ONLY.search(hop_string)
+            if probe_ip_match:
+                probe_name = probe_ip_match.group(1)
+                probe_ip = probe_ip_match.group(1)
+            else:
+                probe_name = None
+                probe_ip = None
 
         probe_rtt_annotations = RE_PROBE_RTT_ANNOTATION.findall(hop_string)
 
