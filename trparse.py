@@ -105,7 +105,8 @@ class Probe(object):
 def loads(data):
     """Parser entry point. Parses the output of a traceroute execution"""
 
-    lines = data.splitlines()
+    # Remove empty lines
+    lines = [line for line in data.splitlines() if line != ""]
 
     # Get headers
     match_dest = RE_HEADER.search(lines[0])
