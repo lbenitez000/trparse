@@ -36,9 +36,13 @@ class Traceroute(object):
         self.dest_name = dest_name
         self.dest_ip = dest_ip
         self.hops = []
+        self.global_rtt = None
 
     def add_hop(self, hop):
         self.hops.append(hop)
+
+    def update_global_rtt(self, rtt):
+        self.global_rtt = rtt
 
     def __str__(self):
         text = "Traceroute for %s (%s)\n\n" % (self.dest_name, self.dest_ip)
@@ -178,6 +182,7 @@ def loads(data):
                 annotation=probe_annotation
             )
             hop.add_probe(probe)
+            traceroute.update_global_rtt(probe_rtt)
 
     return traceroute
 
