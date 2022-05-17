@@ -1,7 +1,8 @@
 .DS_Store
 .idea
 dist/
-test/
-MANIFEST
 *.pyc
-trparse.sublime*
+_*
+_*/
+Pipfile*
+MANIFEST
