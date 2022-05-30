@@ -1,13 +1,24 @@
-# -*- coding: utf-8 -*-
+#! /usr/bin/env python
+#  -*- coding: utf-8 -*-
 
 """
-Copyright (C) 2015 Luis Benitez
-
+trparse 2015-2022 written by:
+ - Orsiris de Jong (@deajan) 2020-2022
+- Rarylson Freitas (@rarylson) 2018-2020
+ - Luis Benitez (@lbenitez000) Copyright (C) 2015-2019
+ 
 Parses the output of a traceroute execution into an AST (Abstract Syntax Tree).
 """
 
-import re
+__intname__ = "trparse"
+__author__ = "Luis Benitez, Rarylson Freitas, Orsiris de Jong"
+__copyright__ = "Copyright (C) 2014-2019 Luis Benitez"
+__license__ = "MIT License"
+__version__ = "0.4.0"
+__build__ = "2022053001"
 
+
+import re
 from decimal import Decimal
 
 # Unix uses () for IPs whereas Windows uses []
