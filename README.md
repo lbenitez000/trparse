@@ -91,6 +91,18 @@ work in a Widows system. Maybe in a future release.
 
 # Changelog
 
+## v0.4.0
+1. Added Windows tracert compatibility
+2. Fixed error when hostname not found
+3. Added traceroute.global_rtt property
+4. Remove empty lines from traceroutes
+5. Added InvalidHeader exception when tracert/traceroute output is inconsistent
+6. Improved test matrix
+
+## v0.3.1
+1. Add Python 3 compatibility
+2. Update documentation
+
 ## v0.3.0
 1. Rebuilt the parsing function to support RTT, IP, Name and ASN in any order inside the hop/probe.
 2. RTT values are now Decimal.
