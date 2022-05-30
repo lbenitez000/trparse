@@ -4,7 +4,7 @@
 """
 trparse 2015-2022 written by:
  - Orsiris de Jong (@deajan) 2020-2022
-- Rarylson Freitas (@rarylson) 2018-2020
+ - Rarylson Freitas (@rarylson) 2018-2020
  - Luis Benitez (@lbenitez000) Copyright (C) 2015-2019
  
 Parses the output of a traceroute execution into an AST (Abstract Syntax Tree).
