@@ -40,7 +40,7 @@ classifiers = [
 ]
 
 setup(name='trparse',
-      version='0.3.0',
+      version='0.3.1',
       description='Traceroute parser',
       author='Luis Benitez',
       url='https://github.com/lbenitez000/trparse',
