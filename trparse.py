@@ -1,18 +1,34 @@
-# -*- coding: utf-8 -*-
+#! /usr/bin/env python
+#  -*- coding: utf-8 -*-
 
 """
-Copyright (C) 2015 Luis Benitez
-
+trparse 2015-2022 written by:
+ - Orsiris de Jong (@deajan) 2020-2022
+ - Rarylson Freitas (@rarylson) 2018-2020
+ - Luis Benitez (@lbenitez000) Copyright (C) 2015-2019
+ 
 Parses the output of a traceroute execution into an AST (Abstract Syntax Tree).
 """
 
-import re
+__intname__ = "trparse"
+__author__ = "Luis Benitez, Rarylson Freitas, Orsiris de Jong"
+__copyright__ = "Copyright (C) 2014-2019 Luis Benitez"
+__license__ = "MIT License"
+__version__ = "0.4.0"
+__build__ = "2022053001"
 
+
+import re
 from decimal import Decimal
 
-RE_HEADER = re.compile(r'(\S+)\s+\((?:(\d+\.\d+\.\d+\.\d+)|([0-9a-fA-F:]+))\)')
+# Unix uses () for IPs whereas Windows uses []
+RE_HEADER = re.compile(r'(\S+)\s+(?:\(|\[)(?:(\d+\.\d+\.\d+\.\d+)|([0-9a-fA-F:]+))(?:\)|\])')
 
-RE_PROBE_NAME_IP = re.compile(r'(\S+)\s+\((?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|([0-9a-fA-F:]+))\)+')
+# Again, we must search for () or [] here
+RE_PROBE_NAME_IP = re.compile(r'(\S+)\s+(?:\(|\[)(?:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})|([0-9a-fA-F:]+))(?:\)|\])+')
+# Fallback when no hostname present (also happens on windows)
+RE_PROBE_IP_ONLY = re.compile(r'(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})+')
+
 RE_PROBE_ANNOTATION = re.compile(r'^(!\w*)$')
 RE_PROBE_TIMEOUT = re.compile(r'^(\*)$')
 
@@ -31,12 +47,16 @@ class Traceroute(object):
         self.dest_name = dest_name
         self.dest_ip = dest_ip
         self.hops = []
+        self.global_rtt = None
 
     def add_hop(self, hop):
         self.hops.append(hop)
 
+    def update_global_rtt(self, rtt):
+        self.global_rtt = rtt
+
     def __str__(self):
-        text = "Traceroute for %s (%s)\n\n" % (self.dest_name, self.dest_ip)
+        text = "Traceroute for {} ({})\n\n".format(self.dest_name, self.dest_ip)
         for hop in self.hops:
             text += str(hop)
         return text
@@ -47,7 +67,7 @@ class Hop(object):
     Abstraction of a hop in a traceroute.
     """
     def __init__(self, idx):
-        self.idx = idx  # Hop count, starting at 1
+        self.idx = idx  # Hop count, starting at 1 (usually)
         self.probes = []  # Series of Probe instances
 
     def add_probe(self, probe):
@@ -88,7 +108,7 @@ class Probe(object):
         if self.asn is not None:
             text += "[AS{:d}] ".format(self.asn)
         if self.rtt:
-            text += "{:s} ({:s}) {:1.3f} ms".format(self.name, self.ip, self.rtt)
+            text += "{} ({}) {:1.3f} ms".format(self.name, self.ip, self.rtt)
         else:
             text = "*"
         if self.annotation:
@@ -100,10 +120,13 @@ class Probe(object):
 def loads(data):
     """Parser entry point. Parses the output of a traceroute execution"""
 
-    lines = data.splitlines()
+    # Remove empty lines
+    lines = [line for line in data.splitlines() if line != ""]
 
     # Get headers
     match_dest = RE_HEADER.search(lines[0])
+    if not match_dest:
+        raise InvalidHeader
     dest_name = match_dest.group(1)
     dest_ip = match_dest.group(2)
 
@@ -140,8 +163,14 @@ def loads(data):
             probe_name = probe_name_ip_match.group(1)
             probe_ip = probe_name_ip_match.group(2) or probe_name_ip_match.group(3)
         else:
-            probe_name = None
-            probe_ip = None
+            # Let's try to only get IP (happens on windows)
+            probe_ip_match = RE_PROBE_IP_ONLY.search(hop_string)
+            if probe_ip_match:
+                probe_name = probe_ip_match.group(1)
+                probe_ip = probe_ip_match.group(1)
+            else:
+                probe_name = None
+                probe_ip = None
 
         probe_rtt_annotations = RE_PROBE_RTT_ANNOTATION.findall(hop_string)
 
@@ -164,6 +193,7 @@ def loads(data):
                 annotation=probe_annotation
             )
             hop.add_probe(probe)
+            traceroute.update_global_rtt(probe_rtt)
 
     return traceroute
 
@@ -173,4 +203,7 @@ def load(data):
 
 
 class ParseError(Exception):
+    pass
+
+class InvalidHeader(ParseError):
     pass

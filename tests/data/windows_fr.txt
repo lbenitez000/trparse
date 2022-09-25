@@ -1,0 +1,16 @@
+Détermination de l’itinéraire vers google.fr [172.217.22.131]
+avec un maximum de 30 sauts :
+
+  1     2 ms     2 ms     5 ms  my.local.network.local [192.168.85.24]
+  2     9 ms     6 ms     6 ms  192.168.12.254
+  3    21 ms    20 ms    22 ms  i15-les02-th2-7-48-3-2.dsl.dyn.abo.bbox.fr [7.48.3.2]
+  4     *       18 ms    17 ms  62.34.2.72
+  5    20 ms    19 ms    19 ms  62.34.2.76
+  6    27 ms    21 ms    19 ms  lag24.rpt02-mrs.net.bbox.fr [212.194.170.56]
+  7    28 ms    29 ms    29 ms  209.85.148.0
+  8    30 ms    30 ms    30 ms  74.125.244.211
+  9    32 ms    50 ms    30 ms  216.239.35.209
+ 10    31 ms    31 ms    30 ms  108.170.233.115
+ 11    31 ms    32 ms    30 ms  108.170.245.1
+ 12    30 ms    30 ms    30 ms  66.249.95.247
+ 13    30 ms    29 ms    30 ms  par21s12-in-f3.1e100.net [172.217.22.131]

@@ -1,0 +1,6 @@
+Détermination de l’itinéraire vers myhost [127.0.0.1]
+avec un maximum de 30 sauts :
+
+  1    <1 ms    <1 ms    <1 ms  myhost [127.0.0.1]
+
+Itinéraire déterminé.
